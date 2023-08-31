@@ -9,6 +9,11 @@ from flask_cors import CORS
 from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User,Planets, People, Starship, Vehicle, Species, Favoritos
+from flask_jwt_extended import create_access_token
+from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import jwt_required
+from flask_jwt_extended import JWTManager
+
 #from models import Person
 
 app = Flask(__name__)
@@ -24,6 +29,10 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 MIGRATE = Migrate(app, db)
 db.init_app(app)
 CORS(app)
+# Setup the Flask-JWT-Extended extension
+app.config["JWT_SECRET_KEY"] = "super-secret"  # Change this!
+jwt = JWTManager(app)
+
 setup_admin(app)
 
 # Handle/serialize errors like a JSON object
@@ -616,7 +625,57 @@ def eliminar_favorito_specie(specie1_id):
         "msg": "Specie eliminado de favorito"
     }
     return jsonify(request_body), 200
+###ENDPOINT PARA SING UP
 
+@app.route("/sing_up", methods=["POST"])
+def sing_up():
+    request_body = request.json
+
+
+    usuario= User(email=request_body["email"], password=request_body["password"], name=request_body["name"], apellido=request_body["apellido"])
+    db.session.add(usuario)
+    db.session.commit()
+    
+    return {
+        "results": usuario.serialize()
+    }
+    
+
+    ##ENDPOINT LOGIN
+@app.route("/login", methods=["POST"])
+def login():
+    email = request.json.get("email", None)
+    password = request.json.get("password", None)
+
+    user_query= User.query.filter_by(email=email).first()
+
+    if user_query is None:
+         return jsonify({"msg": "Email dosn't exist"}), 404
+
+
+
+    if email != user_query.email or password != user_query.password:
+        return jsonify({"msg": "Bad username or password"}), 401
+
+    access_token = create_access_token(identity=email)
+
+    response_body = {
+        "access_token": access_token,
+        "email": user_query.serialize()
+    }
+    return jsonify(response_body)
+
+    ##PROTEGER LA RUTA
+@app.route("/protected", methods=["GET"])
+@jwt_required()
+def protected():
+    # Access the identity of the current user with get_jwt_identity
+    current_user = get_jwt_identity()
+    return jsonify(logged_in_as=current_user), 200
+
+
+if __name__ == "__main__":
+    app.run()
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
