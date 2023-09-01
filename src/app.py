@@ -295,7 +295,7 @@ def get_specie(species_id):
     return jsonify(response_body), 200
 
     #ENPOINT PARA FAVORITOS 
-@app.route('/user/favoritos', methods=['GET'])
+@app.route('/user/favoritos13', methods=['GET'])
 def get_favoritos():
     
     favoritos_query = Favoritos.query.all()
@@ -317,7 +317,7 @@ def get_favoritos():
     return jsonify(response_body), 200
 
     #ENDPOINT PARA FAVORITO
-@app.route('/user/<int:id>/favoritos', methods=['GET'])
+@app.route('/user/<int:id>/favorito1', methods=['GET'])
 def get_favorito(id):
 
 
@@ -630,6 +630,10 @@ def eliminar_favorito_specie(specie1_id):
 @app.route("/sing_up", methods=["POST"])
 def sing_up():
     request_body = request.json
+    
+    users = User.query.filter_by(email=request_body["email"]).first()
+    if users:  
+        return jsonify({"msg":"ya existe"}), 404
 
 
     usuario= User(email=request_body["email"], password=request_body["password"], name=request_body["name"], apellido=request_body["apellido"])
@@ -666,13 +670,20 @@ def login():
     return jsonify(response_body)
 
     ##PROTEGER LA RUTA
-@app.route("/protected", methods=["GET"])
+@app.route('/user/favoritos', methods=["GET"])
 @jwt_required()
 def protected():
     # Access the identity of the current user with get_jwt_identity
-    current_user_id = get_jwt_identity()
-    user=User.filter.get(current_user_id)
-    return jsonify({"id": user.id, "username":user.username}), 200
+    print({"msg":"holaaaaaaaaaaaaaaaaaaaaaaa"})
+    current_user_email = get_jwt_identity()
+    print(current_user_email)
+
+    
+    user=User.query.filter_by(email=current_user_email).first()
+    favorites= Favoritos.query.filter_by(usuario_id= user.id).all()
+    response= list(map(lambda favoritos: favoritos.serialize(),favorites))
+    
+    return jsonify({"results": response}), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
