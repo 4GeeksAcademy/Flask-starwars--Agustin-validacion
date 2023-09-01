@@ -674,7 +674,7 @@ def login():
 @jwt_required()
 def protected():
     # Access the identity of the current user with get_jwt_identity
-    print({"msg":"holaaaaaaaaaaaaaaaaaaaaaaa"})
+    
     current_user_email = get_jwt_identity()
     print(current_user_email)
 
