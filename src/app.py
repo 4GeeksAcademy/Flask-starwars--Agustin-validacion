@@ -633,7 +633,7 @@ def sing_up():
     
     users = User.query.filter_by(email=request_body["email"]).first()
     if users:  
-        return jsonify({"msg":"ya existe"}), 404
+        return jsonify({"msg":" Usuario ya existe"}), 404
 
 
     usuario= User(email=request_body["email"], password=request_body["password"], name=request_body["name"], apellido=request_body["apellido"])
@@ -684,6 +684,21 @@ def protected():
     response= list(map(lambda favoritos: favoritos.serialize(),favorites))
     
     return jsonify({"results": response}), 200
+
+
+
+     ##PROTEGER LA RUTA DEL TOKEN
+@app.route('/valid-token', methods=["GET"])
+@jwt_required()
+def validToken():
+    # Access the identity of the current user with get_jwt_identity
+    
+    current_user_email = get_jwt_identity()
+    print(current_user_email)
+    
+    return jsonify({"is_logged": True }), 200
+
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
